@@ -2,7 +2,6 @@ import dao.Dao;
 import dao.UserDao;
 import domain.User;
 import lombok.extern.slf4j.Slf4j;
-import util.HibernateUtil;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -14,112 +13,145 @@ import java.util.Scanner;
 @Slf4j
 public class Main {
 
-    public static void main(String[] args) {
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    .withZone(ZoneId.systemDefault());
 
+    public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         Dao<User> userDao = new UserDao();
 
         while (true) {
-            System.out.println("1. Добавить пользователя");
-            System.out.println("2. Удалить пользователя");
-            System.out.println("3. Изменить пользователя");
-            System.out.println("4. Посмотреть всех пользователя");
-            System.out.println("5. Посмотреть пользователя по ID");
-            System.out.println("0. Выйти");
+            printMenu();
+            int choice = getIntInput(sc, "Выберите действие: ");
 
-            int choice = sc.nextInt();
 
             switch (choice) {
-                case 1 -> {
-                    User user = new User();
+                case 1 -> createUser(sc, userDao);
+                case 2 -> deleteUser(sc, userDao);
+                case 3 -> updateUser(sc, userDao);
+                case 4 -> showAllUsers(userDao);
+                case 5 -> showUserById(sc, userDao);
+                default -> System.out.println("Неверный выбор. Попробуйте снова.");
+            }
 
-                    System.out.print("Name: ");
-                    user.setName(sc.next());
+            if (choice == 0) {
+                break;
+            }
+        }
 
-                    System.out.print("Email: ");
-                    user.setEmail(sc.next());
+        sc.close();
+    }
 
-                    System.out.print("Age: ");
-                    user.setAge(sc.nextInt());
+    private static void printMenu() {
+        System.out.println("\n=== Управление пользователями ===");
+        System.out.println("1. Добавить пользователя");
+        System.out.println("2. Удалить пользователя");
+        System.out.println("3. Изменить пользователя");
+        System.out.println("4. Посмотреть всех пользователей");
+        System.out.println("5. Посмотреть пользователя по ID");
+        System.out.println("0. Выйти");
+        System.out.print("Ваш выбор: ");
+    }
 
-                    user.setCreatedAt(Instant.now());
-
-                    userDao.save(user);
-                }
-                case 2 -> {
-                    System.out.println("Id: ");
-                    long id = sc.nextLong();
-
-                    Optional<User> userOpt = userDao.get(id);
-
-                    if  (userOpt.isEmpty()) {
-                        log.info("Пользователь не найден :(");
-                        continue;
-                    }
-
-                    User user = userOpt.get();
-
-                    userDao.delete(user);
-                }
-                case 3 -> {
-                    System.out.println("Id: ");
-                    long id = sc.nextLong();
-
-                    Optional<User> userOpt = userDao.get(id);
-
-                    if  (userOpt.isEmpty()) {
-                        log.info("Пользователь не найден :(");
-                        continue;
-                    }
-
-                    User user = userOpt.get();
-
-                    System.out.println("Name: ");
-                    user.setName(sc.next());
-
-                    System.out.println("Email: ");
-                    user.setEmail(sc.next());
-
-                    System.out.println("Age: ");
-                    user.setAge(sc.nextInt());
-
-                    userDao.update(user);
-                }
-                case 4 -> {
-                    List<User> users = userDao.getAll();
-                    users.forEach(System.out::println);
-                }
-                case 5 -> {
-                    System.out.println("Id: ");
-                    long id = sc.nextLong();
-                    Optional<User> userOpt = userDao.get(id);
-
-                    if  (userOpt.isEmpty()) {
-                        log.info("Пользователь не найден :(");
-                        continue;
-                    }
-
-                    User user = userOpt.get();
-
-                    DateTimeFormatter formatter =
-                            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                                    .withZone(ZoneId.systemDefault());
-
-                    System.out.printf(
-                            "Name: %s%nEmail: %s%nAge: %d%nCreated at: %s%n",
-                            user.getName(),
-                            user.getEmail(),
-                            user.getAge(),
-                            formatter.format(user.getCreatedAt())
-                    );
-                }
-                case 0 -> {
-                    HibernateUtil.getSessionFactory().close();
-                    System.exit(0);
-                }
+    private static int getIntInput(Scanner sc, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                return sc.nextInt();
+            } catch (Exception e) {
+                System.out.println("Пожалуйста, введите целое число.");
+                sc.next();
             }
         }
     }
 
+    private static long getLongInput(Scanner sc, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                return sc.nextLong();
+            } catch (Exception e) {
+                System.out.println("Пожалуйста, введите целое число (ID).");
+                sc.next();
+            }
+        }
+    }
 
+    private static void createUser(Scanner sc, Dao<User> userDao) {
+        User user = new User();
+
+        System.out.print("Имя: ");
+        user.setName(sc.next());
+
+        System.out.print("Email: ");
+        user.setEmail(sc.next());
+
+        user.setAge(getIntInput(sc, "Возраст: "));
+        user.setCreatedAt(Instant.now());
+
+        userDao.save(user);
+    }
+
+    private static Optional<User> getUserById(Scanner sc, Dao<User> userDao) {
+        long id = getLongInput(sc, "Введите ID пользователя: ");
+        Optional<User> userOpt = userDao.get(id);
+
+        if (userOpt.isEmpty()) {
+            System.out.println("Пользователь с ID " + id + " не найден.");
+        }
+
+        return userOpt;
+    }
+
+    private static void deleteUser(Scanner sc, Dao<User> userDao) {
+        Optional<User> userOpt = getUserById(sc, userDao);
+        userOpt.ifPresent(userDao::delete);
+    }
+
+    private static void updateUser(Scanner sc, Dao<User> userDao) {
+        Optional<User> userOpt = getUserById(sc, userDao);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+
+            System.out.print("Новое имя: ");
+            user.setName(sc.next());
+
+            System.out.print("Новый email: ");
+            user.setEmail(sc.next());
+
+            user.setAge(getIntInput(sc, "Новый возраст: "));
+
+            userDao.update(user);
+        }
+    }
+
+    private static void showAllUsers(Dao<User> userDao) {
+        List<User> users = userDao.getAll();
+        if (users.isEmpty()) {
+            System.out.println("В базе нет пользователей.");
+        } else {
+            System.out.println("\nСписок всех пользователей:");
+            users.forEach(user -> System.out.println(formatUser(user)));
+        }
+    }
+
+    private static void showUserById(Scanner sc, Dao<User> userDao) {
+        Optional<User> userOpt = getUserById(sc, userDao);
+        if (userOpt.isPresent()) {
+            System.out.println("\nИнформация о пользователе:");
+            System.out.println(formatUser(userOpt.get()));
+        }
+    }
+
+    private static String formatUser(User user) {
+        return String.format(
+                "ID: %d%nName: %s%nEmail: %s%nAge: %d%nCreated at: %s%n",
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getAge(),
+                DATE_FORMATTER.format(user.getCreatedAt())
+        );
+    }
 }
