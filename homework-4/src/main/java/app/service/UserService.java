@@ -4,6 +4,7 @@ import app.dto.CreateUserRequest;
 import app.dto.UpdateUserRequest;
 import app.dto.UserResponse;
 import app.exception.UserNotFoundException;
+import app.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import app.model.User;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class UserService {
                 .orElseThrow(() ->
                         new UserNotFoundException(id));
 
-        return mapToResponse(user);
+        return UserMapper.toResponse(user);
     }
 
     @Transactional(readOnly = true)
@@ -35,7 +36,7 @@ public class UserService {
 
         return userRepository.findAll()
                 .stream()
-                .map(this::mapToResponse)
+                .map(UserMapper::toResponse)
                 .toList();
     }
 
@@ -55,7 +56,7 @@ public class UserService {
 
         User userSaved = userRepository.save(user);
 
-        return mapToResponse(userSaved);
+        return UserMapper.toResponse(userSaved);
     }
 
     public UserResponse update(
@@ -80,7 +81,7 @@ public class UserService {
 
         User updated = userRepository.save(user);
 
-        return mapToResponse(updated);
+        return UserMapper.toResponse(updated);
     }
 
     public void delete(UUID id) {
@@ -90,14 +91,5 @@ public class UserService {
         }
 
         userRepository.deleteById(id);
-    }
-
-    private UserResponse mapToResponse(User user) {
-
-        return new UserResponse(
-                user.getEmail(),
-                user.getName(),
-                user.getAge()
-        );
     }
 }

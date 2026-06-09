@@ -1,6 +1,9 @@
 package app.dto;
 
-import jakarta.validation.constraints.*;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 public record UpdateUserRequest(
         @Email
