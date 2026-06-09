@@ -8,16 +8,19 @@ import lombok.RequiredArgsConstructor;
 import app.model.User;
 import org.springframework.stereotype.Service;
 import app.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public UserResponse getUserById(UUID id) {
 
         User user = userRepository.findById(id)
@@ -27,6 +30,7 @@ public class UserService {
         return mapToResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
 
         return userRepository.findAll()
