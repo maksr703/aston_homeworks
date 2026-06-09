@@ -6,7 +6,9 @@ import org.hibernate.query.SelectionQuery;
 import org.hibernate.query.specification.SelectionSpecification;
 import util.HibernateUtil;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class AbstractDao<T, ID> implements GenericDao<T, ID> {
